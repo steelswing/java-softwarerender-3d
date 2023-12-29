@@ -62,8 +62,8 @@ public class Example {
 
     protected static void init() {
         try {
-            model = StaticMeshLoader.load(new File("model.fbx"));
-            texture = new Texture(ImageIO.read(new File("model_Texture.png")));
+            model = StaticMeshLoader.load(new File("teapot\\debug.fbx").getAbsoluteFile());
+            texture = new Texture(ImageIO.read(new File("teapot\\debug.png").getAbsoluteFile()));
         } catch (Exception e) {
             e.printStackTrace();
         }
