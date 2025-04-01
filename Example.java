@@ -16,6 +16,9 @@ import org.joml.Matrix4f;
  */
 public class Example {
 
+    protected static int threadCount = 12;
+    protected static ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
+
     /**
      * @param args the command line arguments
      */
@@ -76,10 +79,27 @@ public class Example {
 
         buffer.modelMatrix = new Matrix4f().translate(0, -0.5f, 0);//.rotateX(MathHelper.toRadians(-90));
 
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (StaticMeshLoader.Mesh mesh : model) {
+            final int count = mesh.indices.length / threadCount;
+
+            for (int i = 0; i < mesh.indices.length; i += count) {
+                final int start = i;
+
+                CompletableFuture<Void> runAsync = CompletableFuture.runAsync(() -> {
+                    buffer.drawFilledTriangleInline(texture, mesh.vertices, mesh.indices, mesh.normals, mesh.textureCoords, start, start + count);
+                }, executor);
+
+                futures.add(runAsync);
+            }
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        
+        /* single thread
         for (StaticMeshLoader.Mesh mesh : model) {
             System.out.println( mesh.vertices.length);
-            buffer.drawFilledTriangle(texture, mesh.vertices, mesh.indices, mesh.normals, mesh.textureCoords);
-        }
+            buffer.drawFilledTriangleInline(texture, mesh.vertices, mesh.indices, mesh.normals, mesh.textureCoords);
+        }*/
     }
 
 
