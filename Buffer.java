@@ -230,4 +230,136 @@ public class Buffer {
     private float interpolateBarycentric(float v0, float v1, float v2, float[] barycentric) {
         return v0 * barycentric[0] + v1 * barycentric[1] + v2 * barycentric[2];
     }
+
+    public void drawFilledTriangleInline(Texture texture, float[] vertices, int[] indices, float[] normals, float[] textureCoords, int start, int count) {
+        for (int i = start; i < count; i += 3) {
+            if (i > indices.length - 1) {
+                break;
+            }
+            // Трансформация первой вершины
+            int idx0 = indices[i] * 3;
+            float x0 = vertices[idx0];
+            float y0 = vertices[idx0 + 1];
+            float z0 = vertices[idx0 + 2];
+            float w0 = 1.0f;
+
+            // modelMatrix multiplication
+            float mx0 = modelMatrix.m00() * x0 + modelMatrix.m10() * y0 + modelMatrix.m20() * z0 + modelMatrix.m30() * w0;
+            float my0 = modelMatrix.m01() * x0 + modelMatrix.m11() * y0 + modelMatrix.m21() * z0 + modelMatrix.m31() * w0;
+            float mz0 = modelMatrix.m02() * x0 + modelMatrix.m12() * y0 + modelMatrix.m22() * z0 + modelMatrix.m32() * w0;
+            float mw0 = modelMatrix.m03() * x0 + modelMatrix.m13() * y0 + modelMatrix.m23() * z0 + modelMatrix.m33() * w0;
+
+            // viewMatrix multiplication
+            float vx0 = viewMatrix.m00() * mx0 + viewMatrix.m10() * my0 + viewMatrix.m20() * mz0 + viewMatrix.m30() * mw0;
+            float vy0 = viewMatrix.m01() * mx0 + viewMatrix.m11() * my0 + viewMatrix.m21() * mz0 + viewMatrix.m31() * mw0;
+            float vz0 = viewMatrix.m02() * mx0 + viewMatrix.m12() * my0 + viewMatrix.m22() * mz0 + viewMatrix.m32() * mw0;
+            float vw0 = viewMatrix.m03() * mx0 + viewMatrix.m13() * my0 + viewMatrix.m23() * mz0 + viewMatrix.m33() * mw0;
+
+            // projectionMatrix multiplication
+            float px0 = projectionMatrix.m00() * vx0 + projectionMatrix.m10() * vy0 + projectionMatrix.m20() * vz0 + projectionMatrix.m30() * vw0;
+            float py0 = projectionMatrix.m01() * vx0 + projectionMatrix.m11() * vy0 + projectionMatrix.m21() * vz0 + projectionMatrix.m31() * vw0;
+            float pz0 = projectionMatrix.m02() * vx0 + projectionMatrix.m12() * vy0 + projectionMatrix.m22() * vz0 + projectionMatrix.m32() * vw0;
+            float pw0 = projectionMatrix.m03() * vx0 + projectionMatrix.m13() * vy0 + projectionMatrix.m23() * vz0 + projectionMatrix.m33() * vw0;
+
+            px0 /= pw0;
+            py0 /= pw0;
+            pz0 /= pw0;
+            int screenX0 = (int) ((px0 + 1.0f) * width / 2.0f);
+            int screenY0 = (int) ((1.0f - py0) * height / 2.0f);
+            float texU0 = textureCoords[indices[i] * 2];
+            float texV0 = textureCoords[indices[i] * 2 + 1];
+
+            // Трансформация второй вершины
+            int idx1 = indices[i + 1] * 3;
+            float x1 = vertices[idx1];
+            float y1 = vertices[idx1 + 1];
+            float z1 = vertices[idx1 + 2];
+            float w1 = 1.0f;
+
+            float mx1 = modelMatrix.m00() * x1 + modelMatrix.m10() * y1 + modelMatrix.m20() * z1 + modelMatrix.m30() * w1;
+            float my1 = modelMatrix.m01() * x1 + modelMatrix.m11() * y1 + modelMatrix.m21() * z1 + modelMatrix.m31() * w1;
+            float mz1 = modelMatrix.m02() * x1 + modelMatrix.m12() * y1 + modelMatrix.m22() * z1 + modelMatrix.m32() * w1;
+            float mw1 = modelMatrix.m03() * x1 + modelMatrix.m13() * y1 + modelMatrix.m23() * z1 + modelMatrix.m33() * w1;
+
+            float vx1 = viewMatrix.m00() * mx1 + viewMatrix.m10() * my1 + viewMatrix.m20() * mz1 + viewMatrix.m30() * mw1;
+            float vy1 = viewMatrix.m01() * mx1 + viewMatrix.m11() * my1 + viewMatrix.m21() * mz1 + viewMatrix.m31() * mw1;
+            float vz1 = viewMatrix.m02() * mx1 + viewMatrix.m12() * my1 + viewMatrix.m22() * mz1 + viewMatrix.m32() * mw1;
+            float vw1 = viewMatrix.m03() * mx1 + viewMatrix.m13() * my1 + viewMatrix.m23() * mz1 + viewMatrix.m33() * mw1;
+
+            float px1 = projectionMatrix.m00() * vx1 + projectionMatrix.m10() * vy1 + projectionMatrix.m20() * vz1 + projectionMatrix.m30() * vw1;
+            float py1 = projectionMatrix.m01() * vx1 + projectionMatrix.m11() * vy1 + projectionMatrix.m21() * vz1 + projectionMatrix.m31() * vw1;
+            float pz1 = projectionMatrix.m02() * vx1 + projectionMatrix.m12() * vy1 + projectionMatrix.m22() * vz1 + projectionMatrix.m32() * vw1;
+            float pw1 = projectionMatrix.m03() * vx1 + projectionMatrix.m13() * vy1 + projectionMatrix.m23() * vz1 + projectionMatrix.m33() * vw1;
+
+            px1 /= pw1;
+            py1 /= pw1;
+            pz1 /= pw1;
+            int screenX1 = (int) ((px1 + 1.0f) * width / 2.0f);
+            int screenY1 = (int) ((1.0f - py1) * height / 2.0f);
+            float texU1 = textureCoords[indices[i + 1] * 2];
+            float texV1 = textureCoords[indices[i + 1] * 2 + 1];
+
+            // Трансформация третьей вершины
+            int idx2 = indices[i + 2] * 3;
+            float x2 = vertices[idx2];
+            float y2 = vertices[idx2 + 1];
+            float z2 = vertices[idx2 + 2];
+            float w2 = 1.0f;
+
+            float mx2 = modelMatrix.m00() * x2 + modelMatrix.m10() * y2 + modelMatrix.m20() * z2 + modelMatrix.m30() * w2;
+            float my2 = modelMatrix.m01() * x2 + modelMatrix.m11() * y2 + modelMatrix.m21() * z2 + modelMatrix.m31() * w2;
+            float mz2 = modelMatrix.m02() * x2 + modelMatrix.m12() * y2 + modelMatrix.m22() * z2 + modelMatrix.m32() * w2;
+            float mw2 = modelMatrix.m03() * x2 + modelMatrix.m13() * y2 + modelMatrix.m23() * z2 + modelMatrix.m33() * w2;
+
+            float vx2 = viewMatrix.m00() * mx2 + viewMatrix.m10() * my2 + viewMatrix.m20() * mz2 + viewMatrix.m30() * mw2;
+            float vy2 = viewMatrix.m01() * mx2 + viewMatrix.m11() * my2 + viewMatrix.m21() * mz2 + viewMatrix.m31() * mw2;
+            float vz2 = viewMatrix.m02() * mx2 + viewMatrix.m12() * my2 + viewMatrix.m22() * mz2 + viewMatrix.m32() * mw2;
+            float vw2 = viewMatrix.m03() * mx2 + viewMatrix.m13() * my2 + viewMatrix.m23() * mz2 + viewMatrix.m33() * mw2;
+
+            float px2 = projectionMatrix.m00() * vx2 + projectionMatrix.m10() * vy2 + projectionMatrix.m20() * vz2 + projectionMatrix.m30() * vw2;
+            float py2 = projectionMatrix.m01() * vx2 + projectionMatrix.m11() * vy2 + projectionMatrix.m21() * vz2 + projectionMatrix.m31() * vw2;
+            float pz2 = projectionMatrix.m02() * vx2 + projectionMatrix.m12() * vy2 + projectionMatrix.m22() * vz2 + projectionMatrix.m32() * vw2;
+            float pw2 = projectionMatrix.m03() * vx2 + projectionMatrix.m13() * vy2 + projectionMatrix.m23() * vz2 + projectionMatrix.m33() * vw2;
+
+            px2 /= pw2;
+            py2 /= pw2;
+            pz2 /= pw2;
+            int screenX2 = (int) ((px2 + 1.0f) * width / 2.0f);
+            int screenY2 = (int) ((1.0f - py2) * height / 2.0f);
+            float texU2 = textureCoords[indices[i + 2] * 2];
+            float texV2 = textureCoords[indices[i + 2] * 2 + 1];
+
+            // Bounding box и рендеринг
+            int minX = Math.min(screenX0, Math.min(screenX1, screenX2));
+            int maxX = Math.max(screenX0, Math.max(screenX1, screenX2));
+            int minY = Math.min(screenY0, Math.min(screenY1, screenY2));
+            int maxY = Math.max(screenY0, Math.max(screenY1, screenY2));
+
+            if (((screenX1 - screenX0) * (screenY2 - screenY0) - (screenX2 - screenX0) * (screenY1 - screenY0)) < 0) {
+                for (int pixelY = minY; pixelY <= maxY; pixelY++) {
+                    for (int pixelX = minX; pixelX <= maxX; pixelX++) {
+                        float detT = (screenY1 - screenY2) * (screenX0 - screenX2) + (screenX2 - screenX1) * (screenY0 - screenY2);
+                        float alpha = ((screenY1 - screenY2) * (pixelX - screenX2) + (screenX2 - screenX1) * (pixelY - screenY2)) / detT;
+                        float beta = ((screenY2 - screenY0) * (pixelX - screenX2) + (screenX0 - screenX2) * (pixelY - screenY2)) / detT;
+                        float gamma = 1 - alpha - beta;
+
+                        if (alpha >= 0 && beta >= 0 && gamma >= 0) {
+                            float interpolatedZ = pz0 * alpha + pz1 * beta + pz2 * gamma;
+                            int pixelIndex = pixelX + pixelY * width;
+
+                            if (pixelIndex >= 0 && pixelIndex < depthBuffer.length && interpolatedZ > depthBuffer[pixelIndex]) {
+                                float textureU = texU0 * alpha + texU1 * beta + texU2 * gamma;
+                                float textureV = texV0 * alpha + texV1 * beta + texV2 * gamma;
+                                int pixel = texture.getPixel(textureU * texture.width, textureV * texture.height);
+                                if (pixel >> 24 != 0) {
+                                    depthBuffer[pixelIndex] = interpolatedZ;
+                                    pixelData[pixelIndex] = pixel;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
